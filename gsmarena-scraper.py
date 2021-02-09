@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from pathlib import Path
 from stem import Signal
 from stem.control import Controller
+from collections import defaultdict
 
 logger = logging.getLogger("gsmarena-scraper")
 temps_debut = time.time()
@@ -184,7 +185,7 @@ def extract_brand_infos(network, brand):
             logger.error(
                 "%s : td class=section-body not found", url_brand_page
             )
-            return smartphone_list
+        return smartphone_list
 
 
 def main():
@@ -200,32 +201,33 @@ def main():
     Path("Exports").mkdir(parents=True, exist_ok=True)
 
     global_list_smartphones = pd.DataFrame()
-    for brand in brands:
-        brand_name = extract_brand_name(brand)
+    print(len(brands))
+    for i in range(len(brands)):
+        print(i)
+        brand_name = extract_brand_name(brands[i])
+        print(brand_name)
         brand_export_file = f"Exports/{brand_name}_export.csv"
         # If file doesn't already exists, extract smartphone informations.
         if not Path(brand_export_file).is_file():
-            brand_dict = pd.DataFrame.from_records(
-                extract_brand_infos(network, brand)
-            )
-            brand_dict.to_csv(brand_export_file, sep=";", index=False)
-            global_list_smartphones = pd.concat(
-                [global_list_smartphones, brand_dict], sort=False
-            )
-        # Otherwise, read the file.
-        else:
-            logger.warning(
-                "Skipping %s, %s already exists. Its content will be added to the global export file.",
-                brand_name,
-                brand_export_file,
-            )
-            brand_dict = pd.read_csv(brand_export_file, sep=";")
-            global_list_smartphones = pd.concat(
-                [global_list_smartphones, brand_dict], sort=False
-            )
-    all_export_file = "Exports/all_brands_export.csv"
-    logger.info("Exporting all smartphone to %s.", all_export_file)
-    global_list_smartphones.to_csv(all_export_file, sep=";", index=False)
+            brand_dict = extract_brand_infos(network, brands[i])
+            print(type(brand_dict))
+
+            import csv
+            keys = brand_dict[0].keys()
+
+            for i in range(len(brand_dict)):
+                a = defaultdict()
+                for k in keys:
+                    if k in brand_dict[i].keys():
+                        a[k] = brand_dict[i][k]
+                    else:
+                        a[k] = None
+                brand_dict[i] = a
+
+            with open(brand_export_file, 'w', newline='')  as output_file:
+                dict_writer = csv.DictWriter(output_file, keys)
+                dict_writer.writeheader()
+                dict_writer.writerows(brand_dict)
 
     logger.info("Runtime : %.2f seconds" % (time.time() - temps_debut))
 
