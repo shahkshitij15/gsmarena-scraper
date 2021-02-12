@@ -185,7 +185,7 @@ def extract_brand_infos(network, brand):
             logger.error(
                 "%s : td class=section-body not found", url_brand_page
             )
-        return smartphone_list
+            return smartphone_list
 
 
 def main():
@@ -201,15 +201,14 @@ def main():
     Path("Exports").mkdir(parents=True, exist_ok=True)
 
     global_list_smartphones = pd.DataFrame()
-    print(len(brands))
-    for i in range(len(brands)):
-        print(i)
-        brand_name = extract_brand_name(brands[i])
+    for x in range(len(brands)):
+        print(x)
+        brand_name = extract_brand_name(brands[x])
         print(brand_name)
         brand_export_file = f"Exports/{brand_name}_export.csv"
         # If file doesn't already exists, extract smartphone informations.
         if not Path(brand_export_file).is_file():
-            brand_dict = extract_brand_infos(network, brands[i])
+            brand_dict = extract_brand_infos(network, brands[x])
             print(type(brand_dict))
 
             import csv
